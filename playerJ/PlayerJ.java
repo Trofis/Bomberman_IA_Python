@@ -1,20 +1,22 @@
 import java.util.Scanner;
 import java.util.*;
+import java.util.ArrayList;
 
 public class PlayerJ {
 
-    private static String ordres="NSEOB";
-    private int nbLig;
-    private int nbCol;
-    private Network net;
-    private char ID;
-    private String login;
-    private Position posJoueur;
+    public static String ordres="NSEOB";
+    public int nbLig;
+    public int nbCol;
+    public Network net;
+    public char ID;
+    public String login;
+    public Position posJoueur;
 
-    private char[][] laby;
-    private int [][] bombes;
-    private boolean mortSubite;
-    private Random generateur;
+    public char[][] newlaby;
+    public char[][] laby;
+    public int [][] bombes;
+    public boolean mortSubite;
+    public Random generateur;
 
     public PlayerJ (String h, int p, String l) {
 	net = new Network();
@@ -137,7 +139,7 @@ public class PlayerJ {
 		    lireLaby();
 		    printLaby();
 		    printBombes();
-        char dirBomb = checkBomb();
+        ArrayList<ArrayList<Character>> cheminsListe = parcoursProfondeur(laby, posJoueur, new ArrayList<ArrayList<Character>>(),new ArrayList<Character>());
 		    char ordre=ordres.charAt(generateur.nextInt(5));
 		    net.sendChar(ordre);
 		}
@@ -170,80 +172,100 @@ public class PlayerJ {
     //                explorer(G, t);
     // }
 
-    public char[][] parcoursProfondeur(char[][] laby, Position p, ArrayList<ArrayList<char>> chemins)
+    public void transformLaby()
     {
-      char[][] newlaby = laby.copy();
-      for(char elemlaby : newlaby)
+      newlaby = new char[nbLig][nbCol];
+      for(char[] lElemlaby : newlaby)
       {
-        elemlaby = '0';
+        for(char elemlaby : lElemlaby)
+        {
+          elemlaby = '0';
+
+        }
       }
+
+    }
+
+    public ArrayList<ArrayList<Character>> parcoursProfondeur(char[][] laby, Position p, ArrayList<ArrayList<Character>> chemins, ArrayList<Character> chemin)
+    {
+
       newlaby[p.getX()][p.getY()] = '1';
-
-      try{
-        if (laby[p.x][p.y-1] != 'X' && newlaby[p.x][p.y-1] != '1')
-        {
-          if (laby[p.x][p.y-1] == 'B' || )
-          parcoursProfondeur(newlaby, new Position(p.x, p.y-1))
-        }
+      int jAdverse = -1;
+      char jAdverseChar = ' ';
+      try
+      {
+        jAdverse = (int)laby[p.x][p.y-1];
+        jAdverseChar = (char)jAdverse;
       }
-      catch(Execption e)
+      catch(Exception e)
       {
 
       }
-      try{
-        if (laby[p.x][p.y+1] != 'X' && newlaby[p.x][p.y+1] != '1')
-        {
-          parcoursProfondeur(newlaby, new Position(p.x, p.y+1))
-        }
-      }
-      catch(Execption e)
-      {
 
-      }
       try{
-        if (laby[p.x][p.y-1] != 'X' && newlaby[p.x-1][p.y] != '1')
+        if (laby[p.x][p.y-1] != 'X' && newlaby[p.x][p.y-1] != '1' && ((posJoueur.y - (p.y-1) <= 4 && posJoueur.y >=p.y-1)||((p.y-1) - posJoueur.y<= 4 && p.y-1 <= posJoueur.y)))
         {
-          parcoursProfondeur(newlaby, new Position(p.x-1, p.y))
+          chemin.add('O');
+
+          if (laby[p.x][p.y-1] != 'X' && laby[p.x][p.y-1] != ' ' && laby[p.x][p.y-1] != jAdverseChar)
+          {
+            chemins.add(new ArrayList<Character>(chemin));
+          }
+          chemins = parcoursProfondeur(newlaby, new Position(p.x, p.y-1), chemins, chemin);
         }
       }
-      catch(Execption e)
+      catch(Exception e)
       {
 
       }
       try{
-        if (laby[p.x][p.y-1] != 'X' && newlaby[p.x+1][p.y] != '1')
+        if (laby[p.x][p.y+1] != 'X' && newlaby[p.x][p.y+1] != '1' && ((posJoueur.y - (p.y+1) <= 4 && posJoueur.y >=p.y+1)||((p.y+1) - posJoueur.y<= 4 && p.y+1 <= posJoueur.y)))
         {
-          parcoursProfondeur(newlaby, new Position(p.x+1, p.y))
+          chemin.add('E');
+          if (laby[p.x][p.y+1] != 'X' && laby[p.x][p.y+1] != ' ' && laby[p.x][p.y+1] != jAdverseChar)
+          {
+            chemins.add(new ArrayList<Character>(chemin));
+          }
+          chemins = parcoursProfondeur(newlaby, new Position(p.x, p.y+1), chemins, chemin);
         }
       }
-      catch(Execption e)
+      catch(Exception e)
+      {
+
+      }
+      try{
+        if (laby[p.x-1][p.y] != 'X' && newlaby[p.x-1][p.y] != '1' && ((posJoueur.x - (p.x-1) <= 4 && posJoueur.x >=p.x-1)||((p.x-1) - posJoueur.x<= 4 && p.x-1 <= posJoueur.x)))
+        {
+          chemin.add('S');
+          if (laby[p.x-1][p.y] != 'X' && laby[p.x-1][p.y] != ' ' && laby[p.x-1][p.y] != jAdverseChar)
+          {
+            chemins.add(new ArrayList<Character>(chemin));
+          }
+          chemins = parcoursProfondeur(newlaby, new Position(p.x-1, p.y), chemins, chemin);
+        }
+      }
+      catch(Exception e)
+      {
+
+      }
+      try{
+        if (laby[p.x+1][p.y] != 'X' && newlaby[p.x+1][p.y] != '1' && ((posJoueur.x - (p.x+1) <= 4 && posJoueur.x >=p.x+1)||((p.x+1) - posJoueur.x<= 4 && p.x+1 <= posJoueur.x)))
+        {
+          chemin.add('N');
+          if (laby[p.x+1][p.y] != 'X' && laby[p.x+1][p.y] != ' ' && laby[p.x+1][p.y] != jAdverseChar)
+          {
+            chemins.add(new ArrayList<Character>(chemin));
+          }
+          chemins = parcoursProfondeur(newlaby, new Position(p.x+1, p.y), chemins, chemin);
+        }
+      }
+      catch(Exception e)
       {
 
       }
 
 
-      return newlaby;
-    }
-
-    public void innondation()
-    {
-      char[][] zoneLabyJ;
-      for(int x = -4; x < 5; x++)
-      {
-        for(int y = -4; y < 5; y++)
-        {
-          ++cpt;
-          zoneLabyJ[x][y] = laby[x][y];
-          System.out.println("x"+x+"y"+y);
-
-        }
-      }
-      System.out.println(cpt);
-    }
-
-    public char isBomb(int x,int y)
-    {
-
+      return chemins;
     }
 
 

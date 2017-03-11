@@ -3,9 +3,9 @@ import java.io.*;
 
 public class Network {
 
-    private Socket          sock;
-    private DataInputStream   in;
-    private DataOutputStream out;
+    public Socket          sock;
+    public DataInputStream   in;
+    public DataOutputStream out;
 
     /**
      * Construit un objet de type Network
@@ -15,7 +15,7 @@ public class Network {
 	sock=null;
 	in  =null;
 	out =null;
-	// to be explicit 
+	// to be explicit
     }
 
     /**
@@ -58,7 +58,7 @@ public class Network {
      * @throws Exception
      */
     public int getInt() throws Exception {
-        int i; 
+        int i;
 	byte message[]=new byte[2];
         in.read(message, 0, 1);
         i=message[0];
@@ -71,7 +71,7 @@ public class Network {
      * @throws Exception
      */
     public char getChar() throws Exception {
-        char c; 
+        char c;
 	byte message[]=new byte[2];
         in.read(message, 0, 1);
         c=(char)message[0];
@@ -121,15 +121,15 @@ public class Network {
 	try {
 	    int i = 0;
 	    byte message[]=new byte[s.length()+1];
-	    for (i=0; i<s.length(); i++) 
+	    for (i=0; i<s.length(); i++)
 		message[i]=(byte)s.charAt(i);
 	    message[i] = (byte)'\u0000';
-	    out.write(message, 0, s.length()+1); 
+	    out.write(message, 0, s.length()+1);
 	    return 0;
 	}
 	catch (Exception e) {
 	    System.err.println(e);
 	    return 1;
 	}
-    }   
+    }
 }
