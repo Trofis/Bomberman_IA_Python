@@ -45,6 +45,10 @@ public class PlayerJ {
 	    for (int i=0;i<nbLig;i++)
 		for (int j=0;j<nbCol;j++){
 		    char c=net.getChar();
+        if (c == ID)
+        {
+          posJoueur = new Position(i, j);
+        }
 		    laby[i][j]=c;
 		    bombes[i][j]=0;
 		}
@@ -153,7 +157,91 @@ public class PlayerJ {
 	net.disconnect();
     }
 
-    public char checkBomb()
+
+
+    // public void parcoursProfondeur(char[][] laby, Position[] posNSEO, char[] chemin)
+    // {
+    //   for(Position p: Position[] posNSEO)
+    //   {
+    //     if ()
+    //   }
+    //   pour tout sommet t voisin du sommet s
+    //         si t n'est pas marqué alors
+    //                explorer(G, t);
+    // }
+
+    public char[][] parcoursProfondeur(char[][] laby, Position p, ArrayList<ArrayList<char>> chemins)
+    {
+      char[][] newlaby = laby.copy();
+      for(char elemlaby : newlaby)
+      {
+        elemlaby = '0';
+      }
+      newlaby[p.getX()][p.getY()] = '1';
+
+      try{
+        if (laby[p.x][p.y-1] != 'X' && newlaby[p.x][p.y-1] != '1')
+        {
+          if (laby[p.x][p.y-1] == 'B' || )
+          parcoursProfondeur(newlaby, new Position(p.x, p.y-1))
+        }
+      }
+      catch(Execption e)
+      {
+
+      }
+      try{
+        if (laby[p.x][p.y+1] != 'X' && newlaby[p.x][p.y+1] != '1')
+        {
+          parcoursProfondeur(newlaby, new Position(p.x, p.y+1))
+        }
+      }
+      catch(Execption e)
+      {
+
+      }
+      try{
+        if (laby[p.x][p.y-1] != 'X' && newlaby[p.x-1][p.y] != '1')
+        {
+          parcoursProfondeur(newlaby, new Position(p.x-1, p.y))
+        }
+      }
+      catch(Execption e)
+      {
+
+      }
+      try{
+        if (laby[p.x][p.y-1] != 'X' && newlaby[p.x+1][p.y] != '1')
+        {
+          parcoursProfondeur(newlaby, new Position(p.x+1, p.y))
+        }
+      }
+      catch(Execption e)
+      {
+
+      }
+
+
+      return newlaby;
+    }
+
+    public void innondation()
+    {
+      char[][] zoneLabyJ;
+      for(int x = -4; x < 5; x++)
+      {
+        for(int y = -4; y < 5; y++)
+        {
+          ++cpt;
+          zoneLabyJ[x][y] = laby[x][y];
+          System.out.println("x"+x+"y"+y);
+
+        }
+      }
+      System.out.println(cpt);
+    }
+
+    public char isBomb(int x,int y)
     {
 
     }
