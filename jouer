@@ -1,0 +1,24 @@
+#! /bin/bash
+
+# décommentez les 3 lignes qui conviennent
+
+
+# player C
+# cd playerC
+# ./player $1 $2 $3
+# cd ..
+
+# player C++
+# cd playerC++
+# ./player $1 $2 $3
+# cd ..
+
+# player Java
+# cd playerJ
+# java PlayerJ $1 $2 $3
+# cd ..
+
+# player Python
+# cd playerP
+# ./player.py $1 $2 $3
+# cd ..
