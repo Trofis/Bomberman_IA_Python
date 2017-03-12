@@ -1,6 +1,8 @@
 import java.util.Scanner;
 import java.util.*;
-import java.util.ArrayList;
+import java.util.concurrent.*;
+import java.lang.*;
+
 
 public class PlayerJ {
 
@@ -38,6 +40,7 @@ public class PlayerJ {
 	    bombes= new int [nbLig][nbCol];
 	}
 	catch (Exception e) {
+    e.printStackTrace();
 	    System.err.println(e);
 	    System.exit(0);
 	}
@@ -63,6 +66,7 @@ public class PlayerJ {
 	    }
 	}
 	catch (Exception e) {
+    e.printStackTrace();
 	    System.err.println(e);
 	}
     }
@@ -91,12 +95,21 @@ public class PlayerJ {
 	System.out.print("+\n");
     }
 
-    public void printBombes(){
+  public void printBombes(){
 	System.out.print("liste des bombes : ");
-	for (int i=0; i<nbLig; i++)
-	    for (int j=0; j<nbCol; j++)
-		if  (bombes[i][j]==1)
-		    System.out.print("("+i+","+j+") ");
+	for (int i=0; i<nbLig; i++){
+    for (int j=0; j<nbCol; j++){
+      try{
+        if  (bombes[i][j]==1){
+          System.out.print("("+i+","+j+") ");
+        }
+      }
+      catch(IndexOutOfBoundsException ie){
+        ie.printStackTrace();
+        System.out.println("pb mon gars");
+      }
+    }
+  }
 	System.out.println();
     }
 
@@ -111,6 +124,7 @@ public class PlayerJ {
 		System.out.println("Reception taille laby!");
 		lireSpecLaby();
 		printSpecLaby();
+    this.newlaby = new char[nbLig][nbCol];
 		if (mortSubite)
 		    System.out.println("partie mort subite");
 		else
@@ -123,6 +137,7 @@ public class PlayerJ {
 	    }
 	}
 	catch (Exception e) {
+    e.printStackTrace();
 	    System.err.println(e);
 	    System.exit(0);
 	}
@@ -139,9 +154,12 @@ public class PlayerJ {
 		    lireLaby();
 		    printLaby();
 		    printBombes();
-        ArrayList<ArrayList<Character>> cheminsListe = parcoursProfondeur(laby, posJoueur, new ArrayList<ArrayList<Character>>(),new ArrayList<Character>());
-		    char ordre=ordres.charAt(generateur.nextInt(5));
-		    net.sendChar(ordre);
+        transformLaby();
+        ArrayList<ArrayList<Character>> cheminsListe = parcoursProfondeur(posJoueur, new ArrayList<ArrayList<Character>>(),new ArrayList<Character>());
+        ArrayList<Chemin> cheminsAmeliore = checkParticulariteChemins(cheminsListe);
+        char destination = direction(cheminsAmeliore);
+		    //char ordre=ordres.charAt(generateur.nextInt(5));
+		    net.sendChar(destination);
 		}
 		else if (s.startsWith("DEAD") || s.startsWith("QUIT")){
 		    System.out.println("Fin de la partie! serveur a dit "+s);
@@ -151,6 +169,7 @@ public class PlayerJ {
 		    System.out.println("Ordre inattendu : "+s);
 	    }
 	    catch (Exception e) {
+        e.printStackTrace();
 		System.err.println(e);
 		System.exit(0);
 	    }
@@ -161,7 +180,7 @@ public class PlayerJ {
 
 
 
-    // public void parcoursProfondeur(char[][] laby, Position[] posNSEO, char[] chemin)
+    // public void parcoursProfondeur(char[][] Position[] posNSEO, char[] chemin)
     // {
     //   for(Position p: Position[] posNSEO)
     //   {
@@ -174,105 +193,467 @@ public class PlayerJ {
 
     public void transformLaby()
     {
-      newlaby = new char[nbLig][nbCol];
-      for(char[] lElemlaby : newlaby)
+      for(int x=0;x<nbLig;x++)
       {
-        for(char elemlaby : lElemlaby)
+        for(int y=0;y<nbLig;y++)
         {
-          elemlaby = '0';
+          this.newlaby[x][y] = '0';
 
         }
       }
 
     }
 
-    public ArrayList<ArrayList<Character>> parcoursProfondeur(char[][] laby, Position p, ArrayList<ArrayList<Character>> chemins, ArrayList<Character> chemin)
+    public ArrayList<ArrayList<Character>> parcoursProfondeur(Position p, ArrayList<ArrayList<Character>> chemins, ArrayList<Character> chemin)
     {
+      for(char[] lElemlaby : this.newlaby)
+      {
+        for(char elemlaby : lElemlaby)
+        {
+          System.err.println(elemlaby);
 
-      newlaby[p.getX()][p.getY()] = '1';
+        }
+      }
+      this.newlaby[p.x][p.y] = '1';
       int jAdverse = -1;
       char jAdverseChar = ' ';
       try
       {
-        jAdverse = (int)laby[p.x][p.y-1];
+        if((int)p.y-1 == -1){
+          p.y = nbCol-1;
+        }
+        int posY= p.y-1;
+        jAdverse = (int)laby[p.x][posY];
         jAdverseChar = (char)jAdverse;
       }
       catch(Exception e)
       {
-
+        System.out.print("f-1");
+        e.printStackTrace();
       }
 
       try{
-        if (laby[p.x][p.y-1] != 'X' && newlaby[p.x][p.y-1] != '1' && ((posJoueur.y - (p.y-1) <= 4 && posJoueur.y >=p.y-1)||((p.y-1) - posJoueur.y<= 4 && p.y-1 <= posJoueur.y)))
+        if((int)p.y-1 == -1){
+          p.y = nbCol-1;
+        }
+        int posY= p.y-1;
+        if (
+        laby[p.x][posY] != 'X' &&
+        newlaby[p.x][posY] != '1' &&
+        ((posJoueur.y - posY >= 4 &&
+        posJoueur.y >=posY)||(posY - posJoueur.y<= 4 &&
+         posY <= posJoueur.y)))
         {
           chemin.add('O');
 
-          if (laby[p.x][p.y-1] != 'X' && laby[p.x][p.y-1] != ' ' && laby[p.x][p.y-1] != jAdverseChar)
+          if
+          (laby[p.x][posY] != 'X' &&
+           laby[p.x][posY] != ' ' &&
+           laby[p.x][posY] != jAdverseChar)
           {
             chemins.add(new ArrayList<Character>(chemin));
           }
-          chemins = parcoursProfondeur(newlaby, new Position(p.x, p.y-1), chemins, chemin);
+          chemins = parcoursProfondeur(new Position(p.x, posY), chemins, chemin);
         }
       }
       catch(Exception e)
       {
+        System.out.println("first");
+        e.printStackTrace();
 
       }
+
       try{
-        if (laby[p.x][p.y+1] != 'X' && newlaby[p.x][p.y+1] != '1' && ((posJoueur.y - (p.y+1) <= 4 && posJoueur.y >=p.y+1)||((p.y+1) - posJoueur.y<= 4 && p.y+1 <= posJoueur.y)))
+        if((int)p.y+1 == nbCol){
+          p.y = 0;
+        }
+        int posY =p.y+1;
+        if (
+        laby[p.x][posY] != 'X' &&
+        newlaby[p.x][posY] != '1' &&
+        ((posJoueur.y - posY <= 4 &&
+        posJoueur.y >=posY)||(posY - posJoueur.y<= 4 &&
+        posY <= posJoueur.y)))
         {
           chemin.add('E');
-          if (laby[p.x][p.y+1] != 'X' && laby[p.x][p.y+1] != ' ' && laby[p.x][p.y+1] != jAdverseChar)
+          if (
+          laby[p.x][posY] != 'X' &&
+          laby[p.x][posY] != ' ' &&
+          laby[p.x][posY] != jAdverseChar)
           {
             chemins.add(new ArrayList<Character>(chemin));
           }
-          chemins = parcoursProfondeur(newlaby, new Position(p.x, p.y+1), chemins, chemin);
+          chemins = parcoursProfondeur(new Position(p.x, posY), chemins, chemin);
         }
       }
       catch(Exception e)
       {
-
+        System.out.println("s");
+        e.printStackTrace();
       }
       try{
-        if (laby[p.x-1][p.y] != 'X' && newlaby[p.x-1][p.y] != '1' && ((posJoueur.x - (p.x-1) <= 4 && posJoueur.x >=p.x-1)||((p.x-1) - posJoueur.x<= 4 && p.x-1 <= posJoueur.x)))
+        if((int)p.x-1 == -1){
+          p.x = nbLig-1;
+        }
+        int posX = p.x-1;
+        if (
+        laby[posX][p.y] != 'X' &&
+        newlaby[posX][p.y] != '1' &&
+        ((posJoueur.x - posX <= 4 &&
+        posJoueur.x >= posX)|| (posX - posJoueur.x<= 4 &&
+        posX <= posJoueur.x)))
+        {
+          System.out.println(laby[(p.x-1+nbLig)%nbLig][p.y]);
+          chemin.add('N');
+          if (
+          laby[posX][p.y] != 'X' &&
+           laby[posX][p.y] != ' ' &&
+           laby[posX][p.y] != jAdverseChar)
+          {
+            chemins.add(new ArrayList<Character>(chemin));
+          }
+          chemins = parcoursProfondeur(new Position(posX, p.y), chemins, chemin);
+        }
+      }
+      catch(Exception e)
+      {
+        System.out.println("third");
+        e.printStackTrace();
+      }
+      try{
+        if((int)p.x+1 == nbLig){
+          p.x = 0;
+        }
+        int posX = p.x+1;
+        if (
+        laby[posX][p.y] != 'X' &&
+        laby[posX][p.y] != '1' &&
+        ((posJoueur.x - posX <= 4 &&
+        posJoueur.x >=posX)||(posX - posJoueur.x<= 4 &&
+        posX <= posJoueur.x)))
         {
           chemin.add('S');
-          if (laby[p.x-1][p.y] != 'X' && laby[p.x-1][p.y] != ' ' && laby[p.x-1][p.y] != jAdverseChar)
+          if (
+          laby[posX][p.y] != 'X' &&
+          laby[posX][p.y] != ' ' &&
+          laby[posX][p.y] != jAdverseChar
+          )
           {
             chemins.add(new ArrayList<Character>(chemin));
           }
-          chemins = parcoursProfondeur(newlaby, new Position(p.x-1, p.y), chemins, chemin);
+          chemins = parcoursProfondeur(new Position(posX, p.y), chemins, chemin);
         }
       }
       catch(Exception e)
       {
-
+        System.out.println("fourth");
+        e.printStackTrace();
       }
-      try{
-        if (laby[p.x+1][p.y] != 'X' && newlaby[p.x+1][p.y] != '1' && ((posJoueur.x - (p.x+1) <= 4 && posJoueur.x >=p.x+1)||((p.x+1) - posJoueur.x<= 4 && p.x+1 <= posJoueur.x)))
-        {
-          chemin.add('N');
-          if (laby[p.x+1][p.y] != 'X' && laby[p.x+1][p.y] != ' ' && laby[p.x+1][p.y] != jAdverseChar)
-          {
-            chemins.add(new ArrayList<Character>(chemin));
-          }
-          chemins = parcoursProfondeur(newlaby, new Position(p.x+1, p.y), chemins, chemin);
-        }
-      }
-      catch(Exception e)
-      {
-
-      }
-
-
       return chemins;
     }
 
+    public ArrayList<Chemin> checkParticulariteChemins(ArrayList<ArrayList< Character>> chemins){
+      ArrayList<Chemin> lesChemins = new ArrayList<Chemin>();
+      int x = this.posJoueur.getX();
+      int y = this.posJoueur.getY();
+      System.out.println("chemin length"+chemins.size());
+      for (ArrayList<Character> chemin :chemins)
+        {
+          boolean bombe = false;
+          boolean mur = false;
+          boolean bonusBombe = false;
+          boolean bonusExplo = false;
+          boolean bonusPoint = false;
+          boolean bonusTP = false;
+          int cpt = 0;
+          for(char caseContaint :  chemin)
+          {
+            //Traitement verification des bonus
+            // System.out.println(caseContaint);
+            try{
+              char caselaby = laby[(x+nbLig)%nbLig][(y+nbCol)%nbCol];
+              if(caselaby =='%'){
+                bonusBombe=true;
+              }
+              else if(caselaby =='$'){
+                bonusPoint=true;
+              }
+              else if(caselaby =='#'){
+                bonusExplo=true;
+              }
+              else if(caselaby =='@'){
+                bonusTP=true;
+              }
+            }
+            catch(ArrayIndexOutOfBoundsException e){
+              System.out.println("x"+(x+nbLig)%nbLig);
+              System.out.println("y"+(y+nbCol)%nbCol);
+              System.out.println("x2"+x);
+              System.out.println("y2"+y);
 
 
-    public static void main(String [] args) {
-	PlayerJ p = new PlayerJ(args[0], Integer.parseInt(args[1]),args[2]);
-	p.connexionServeur();
-	p.demarrer(args[2]);
+              System.out.println("nbcol"+nbCol);
+              System.out.println("nblig"+nbLig);
+              e.printStackTrace();
+            }
+            // Traitement verification des chemins
+            try{
+              if(bombes[(x+nbLig)%nbLig][(y+nbCol)%nbCol]==1){
+                bombe =true;
+              }
+              // Ajout dans le chemin
+              else if(caseContaint=='N'){
+                y++;
+              }
+              else if(caseContaint=='S'){
+                y--;
+                if(y<0){
+                  y = nbCol-1;
+                }
+              }
+              else if(caseContaint=='E'){
+                x++;
+              }
+              else if(caseContaint=='O'){
+                if(x<0){
+                  y = nbLig-1;
+                }
+              }
+            }
+            catch(Exception e){
+              System.out.println("bug au try de flo2");
+              e.printStackTrace();
+            }
+            cpt++;
+          }
+          if(!bombe && !mur){
+            System.out.println("ajout d'un element");
+            System.out.println(bonusBombe);
+            System.out.println(bonusExplo);
+            System.out.println(bonusTP);
+            System.out.println(bonusPoint);
+            // try{
+            //   TimeUnit.SECONDS.sleep(2);
+            // }
+            // catch(InterruptedException e1){
+            //   e1.printStackTrace();
+            // }
+            lesChemins.add(new Chemin(chemin,bonusBombe,bonusExplo,bonusPoint,bonusTP,(x+nbLig)%nbLig,(x+nbCol)%nbCol,cpt));
+          }
+        }
+      return lesChemins;
     }
+
+
+      public boolean checkBombes(int x, int y){
+        //False if not bomb
+        boolean boom=false;
+        // while(!boom){
+          for(int i=0; i<nbLig; i++){
+            if (bombes[i][y]==1){
+              boom = true;
+            }
+          }
+          for(int i=0; i<nbCol; i++){
+            if (bombes[x][i]==1){
+              boom = true;
+            }
+          }
+
+        // }
+        return boom;
+      }
+
+
+
+      public char direction(ArrayList<Chemin> chemins){
+        for(Chemin chemin : chemins ){
+          if(chemin.bonusPoints ){
+            System.out.println("pref");
+              return chemin.liste.get(0);
+          }
+          else if(chemin.bonusBombe){
+              System.out.println("pre2f");
+              return chemin.liste.get(0);
+          }
+          else if(chemin.bonusTP ){
+              System.out.println("pre3f");
+              return chemin.liste.get(0);
+          }
+          else if(chemin.bonusExplosion){
+            System.out.println("pre4f");
+              return chemin.liste.get(0);
+          }
+        }
+        // for(Chemin chemin : chemins ){
+        //   if(chemin.bonusPoints && !checkBombes(chemin.x,chemin.y)){
+        //       return chemin.liste.get(0);
+        //   }
+        //   else if(chemin.bonusBombe && !checkBombes(chemin.x,chemin.y)){
+        //       return chemin.liste.get(0);
+        //   }
+        //   else if(chemin.bonusTP && !checkBombes(chemin.x,chemin.y)){
+        //       return chemin.liste.get(0);
+        //   }
+        //   else if(chemin.bonusExplosion && !checkBombes(chemin.x,chemin.y)){
+        //       return chemin.liste.get(0);
+        //   }
+        // }
+        // System.out.println(chemins.get(0).liste.charAt(0));
+        int posX =0;
+        int posY =0;
+        int posXP =0;
+        int posYP =0;
+        if(chemins.size() == 0){
+          System.out.println("Le chemin est archi vide");
+          if (this.posJoueur.x-1 <0){
+            posX = this.nbCol -1 ;
+          }
+          else{
+            posX = this.posJoueur.x-1;
+          }
+          if (this.posJoueur.y-1 <0){
+            posY = this.nbLig -1;
+          }
+          else{
+            posY = this.posJoueur.y-1;
+          }
+          if(this.posJoueur.y+1 == nbCol){
+            posYP = 0;
+          }
+          else{
+            posYP=this.posJoueur.y+1;
+          }
+          if(this.posJoueur.x+1 == nbLig){
+            posXP = 0;
+          }
+          else{
+            posXP = this.posJoueur.x+1;
+          }
+          System.out.println("poxY 0"+posY);
+          System.out.println("posX"+posX);
+          ArrayList<Character> decideur = new ArrayList<Character>();
+
+          int partUnFinX = nbLig /2;
+          // int partDeuxDebutX = (nbLig /2 +1);
+          int partUnFinY = nbCol /2;
+          // int partDeuxDebutY = (nbCol /2 +1);
+
+          if(this.posJoueur.x<partUnFinX){
+            //on oublie O reste NSE
+            if(this.posJoueur.y< partUnFinY){
+              //on oublie nord
+              // On choisi sud ou est
+              if(laby[posXP][this.posJoueur.y] != 'X'){
+                decideur.add('S');
+              }
+              if(laby[this.posJoueur.x][posYP] != 'X'){
+               decideur.add('E');
+              }
+            }
+            else{
+              if(laby[posXP][this.posJoueur.y] != 'X'){
+                decideur.add('S');
+              }
+              if(laby[this.posJoueur.x][posY] != 'X'){
+                decideur.add('O');
+              }
+
+            }
+          }
+
+          else{
+            if(this.posJoueur.y< partUnFinY){
+              //on oublie nord
+              // On choisi nord est
+              if(laby[this.posJoueur.x][posYP] != 'X'){
+               decideur.add('E');
+              }
+              if(laby[posX][this.posJoueur.y] != 'X'){
+                decideur.add('N');
+              }
+
+            }
+            else{
+              // on choisi nord ouest
+              if(laby[posX][this.posJoueur.y] != 'X'){
+                decideur.add('N');
+              }
+              if(laby[this.posJoueur.x][posY] != 'X'){
+                decideur.add('O');
+              }
+            }
+          }
+          System.err.println("ee"+decideur.size());
+          if(decideur.size() ==0){
+
+            return ordres.charAt(generateur.nextInt(5));
+          }
+          int choisirCentreRandom = generateur.nextInt(5);
+          char res =' ';
+          if(choisirCentreRandom == 1){
+            res =  decideur.get(generateur.nextInt(decideur.size()));
+          }
+          else{
+            if(laby[posXP][this.posJoueur.y] != 'X'){
+              decideur.add('S');
+            }
+            if(laby[this.posJoueur.x][posY] != 'X'){
+              decideur.add('O');
+            }
+            if(laby[this.posJoueur.x][posYP] != 'X'){
+             decideur.add('E');
+            }
+            if(laby[posX][this.posJoueur.y] != 'X'){
+              decideur.add('N');
+            }
+            res =  decideur.get(generateur.nextInt(decideur.size()));
+
+          }
+          return res;
+
+        }
+        return chemins.get(0).liste.get(0);
+
+      }
+        // public void innondation()
+        // {
+        //   char[][] zoneLabyJ;
+        //   for(int x = -4; x < 5; x++)
+        //   {
+        //     for(int y = -4; y < 5; y++)
+        //     {
+        //       ++cpt;
+        //       zoneLabyJ[x][y] = laby[x][y];
+        //       System.out.println("x"+x+"y"+y);
+        //
+        //     }
+        //   }
+        //   System.out.println(cpt);
+        // }
+
+
+
+        public static void main(String [] args) {
+          try{
+            // ArrayList<Character> al = new ArrayList<Character>();
+            // al.add('a');
+            // al.add('b');
+            // al.add('c');
+            // al.add('d');
+            // Chemin c1 = new Chemin(al,false,false,false,false,0,0,1);
+            // Chemin c2 = new Chemin(al,false,false,false,false,0,0,1);
+            // ArrayList<Chemin> alc = new ArrayList<Chemin>();
+            // alc.add(c1);
+            // alc.add(c2);
+            // System.out.println(alc.get(0).liste.get(0));
+            PlayerJ p = new PlayerJ(args[0], Integer.parseInt(args[1]),args[2]);
+            p.connexionServeur();
+            p.demarrer(args[2]);
+          }
+          catch(Exception e){
+            System.out.print("main");
+            e.printStackTrace();
+          }
+        }
 }
